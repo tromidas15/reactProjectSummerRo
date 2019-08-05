@@ -9,9 +9,8 @@ import {AlertMod} from '../Misc/Alert';
 import {validate} from '../../Services/Validator';
 import {getCurentPage} from '../../Services/GetCurrentPage';
 import {columns} from './ObjectsAttr/table';
-import CustomSelect from "../Misc/CustomSelect";
 
-export default class Products extends Component {
+export default class Users extends Component {
 
 
     constructor(props) {
@@ -20,25 +19,23 @@ export default class Products extends Component {
         uniqueId.enableUniqueIds(this);
 
         this.state = {
-            product: [],
-            categories: [],
+            users: [],
+
             showModal: false,
-            products: {
+            user: {
                 id: '',
                 name: '',
-                description : '',
-                quantity : null,
-                full_price : "",
-                category_id: null, 
+                password : '',
+                email:"",
+                type:"0",
             },
+
+            selectedFile : '',
 
             action: true,
 
-            selectedFile : null,
-
             reRender: false,
             mode: 'add',
-
             totalPages : '',
             currentPage : 1,
 
@@ -48,6 +45,7 @@ export default class Products extends Component {
             validateErrors : [],
 
             actionBlock : false,
+
         };
     };
 
@@ -63,7 +61,7 @@ export default class Products extends Component {
         const {reRender} = this.state;
 
         if (!prevState.reRender && reRender) {
-            await this._getProducts();
+            await this._getUser();
 
             this.setState({
                 actionBlock: false
@@ -73,9 +71,7 @@ export default class Products extends Component {
     }
 
     async componentDidMount() {
-        await this._getProducts();
-        await this._getCategories();
-
+        await this._getUser();
     }
 
     _getCurentPage=(p)=>{
@@ -100,68 +96,39 @@ export default class Products extends Component {
 
     }
 
-    _getCategories = async() => {
 
-        const res = await http.route('subcategories').get();
+    _getUser = async () => {
 
-        if (!res.isError) {
-            const response = res.data;
-
-            let categories = [];
-
-            response.length > 0 && response.map((value, key) => {
-                let category = {
-                    name: value.name,
-                    value: value.id,
-                    subItems: []
-                };
-
-                value.sub_categories.length > 0 && value.sub_categories.map((sub, k) => {
-                    category.subItems.push({
-                        name: sub.name,
-                        value: sub.id
-                    });
-                });
-
-                categories.push(category);
-            });
-
-            this.setState({
-                categories
-            });
-        }
-
-    }
-
-    _getProducts = async () => {
-
-        let res = await http.route('products').get({page : this.state.currentPage});
+        let res = await http.route('user/getAll').get({page : this.state.currentPage});
 
         if (!res.isError) {
 
-            let product = res.data;
+            let users = res.data;
 
             this.setState({
-                product,
+                users,
                 reRender: false,
                 totalPages:res.pagination.totalPages
             });
 
         } else {
 
-            AlertMod({title :'A aparut o problema'});
+            if(res.errorMessage.error == "AccesDenied"){
+                alert("You do not have permissions")
+                this.props.history.push("/");
+            }
 
         }
     };
 
-    _addProduct = () => {     
+    _addUser = () => {     
             this.setState({  
-                        products: {
+                        user: {
                             id: '',
                             name: '',
-                            quantity: '',
-                            description : '',
-                            full_price : "",
+                            email : "",
+                            password: '',
+                            type : '0',
                         },
                         mode: 'add',
                         showModal: true,
@@ -183,26 +150,24 @@ export default class Products extends Component {
             actionBlock : true
         })
 
-        const {products} = this.state
+        const {user} = this.state
 
-        var validation = validate(products);
+        var validation = validate(user);
 
         let request = {
-            id: products.id,
-            name: products.name,
-            description : products.description,
-            quantity : products.quantity,
-            full_price : products.full_price,
-            category_id : products.category_id,
-            image :  this.state.selectedFile,
+            id: user.id,
+            name: user.name,
+            email : user.email,
+            password : user.password,
+            type : user.type,
+            image : this.state.selectedFile,
         };
 
         
         if(validation == true){
 
-            if (products.id !== '') {
-            
-                let res = await http.route(`product/${products.id}`).patch(request);
+            if (user.id !== '') {
+                let res = await http.route(`/user/update/${user.id}`).patch(request);
 
                 if(res.errorMessage.error =="Image source not readable"){
                     alert(res.errorMessage.error);
@@ -229,7 +194,7 @@ export default class Products extends Component {
                 
             }else{
 
-                let res = await http.route(`product`).post(request);
+                let res = await http.route(`user/create`).post(request);
 
                 if(res.errorMessage.error =="Image source not readable"){
                     alert(res.errorMessage.error);
@@ -270,11 +235,18 @@ export default class Products extends Component {
     _edit = (item) => {
 
         this.setState({
-            products: item,
+            user:{
+                ...this.state.user,
+                email : item.email,
+                name : item.name,
+                type : item.type,
+                id: item.id
+            },
             showModal: true,
             mode: 'edit',
             validateErrors: []
         });
+
 
     };
 
@@ -290,7 +262,7 @@ export default class Products extends Component {
             actionBlock : true
         })
 
-        await http.route(`product/${id}`).delete();
+        await http.route(`/user/delete/${id}`).delete();
 
             this.setState({
                 reRender: true,
@@ -299,21 +271,20 @@ export default class Products extends Component {
             
     };
 
-    _onChangeProduct = e => {
+    _onChangeUser = e => {
 
-        const {products} = this.state;
+        const {user} = this.state;
         const {name, value} = e.target;
 
         this.setState({
-            products: {
-                ...products,
+            user: {
+                ...user,
                 [name]: value
             }
         });
 
+
     };
-
-
 
     _fileCreator(file){
 
@@ -341,72 +312,54 @@ export default class Products extends Component {
         triggerInputFile = (e) => {
             this.fileInput.click()
         }
-        _onChangeCategory = (val) => {
-            const {products} = this.state;
-    
-            this.setState({
-                products: {
-                    ...products,
-                    category_id: val
-                }
-            });
-        };
-        
+
+
 
     render(){ 
 
-        const {product, showModal, products, mode , categories} = this.state;
+        const {users, showModal, user, mode } = this.state;
 
-        this.props.user.type == 0 ? columns[8] = "" : "";
+     
 
         return (
             <Layout>
-                <CustomModal title={mode == "add" ? "Add product" : "Edit product"}
+                <CustomModal title={mode}
                              toggle={this._toggle}
                              showModal={showModal}
                              actionText="Save"
                              action={this._save}>
                              
                     <FormGroup>
-                        <Label for={this.nextUniqueId()}>Name</Label>
-                        <Input type="text" name="name" value={products.name} id={this.lastUniqueId()}
-                               placeholder="Name..." onChange={this._onChangeProduct}/>
+                        <Label for={this.nextUniqueId()}>Username:</Label>
+                        <Input type="text" name="name" value={user.name} id={this.lastUniqueId()}
+                               placeholder="Name..." onChange={this._onChangeUser}/>
 
                                <p className="validate-error">{this.state.validateErrors.name ? this.state.validateErrors.name : ""}</p>
 
-                        <Label for={this.nextUniqueId()}>Description</Label>
-                        <textarea type="text" name="description" className="description-area" value={products.description} id={this.lastUniqueId()}
-                               placeholder="Description" onChange={this._onChangeProduct}></textarea>
+                        <Label for={this.nextUniqueId()}>Email :</Label>
+                        <Input type="email" name="email" value={user.email} id={this.lastUniqueId()}
+                               placeholder="Email..." onChange={this._onChangeUser} />
 
-                               <p className="validate-error">{this.state.validateErrors.description ? this.state.validateErrors.description : ""}</p>
-                               
-                        <Label for={this.nextUniqueId()}>Quantity</Label>
-                        <Input type="text" name="quantity" value={products.quantity} id={this.lastUniqueId()}
-                               placeholder="Quantity..." onChange={this._onChangeProduct}/>
+                               <p className="validate-error">{this.state.validateErrors.email? this.state.validateErrors.email : ""}</p>
 
-                               <p className="validate-error">{this.state.validateErrors.quantity ? this.state.validateErrors.quantity : ""}</p>
-                        
-                        <Label for={this.nextUniqueId()}>Full Price</Label>
-                        <Input type="text" name="full_price" value={products.full_price} id={this.lastUniqueId()}
-                               placeholder="Full Price..." onChange={this._onChangeProduct}/>
+                        <Label for={this.nextUniqueId()}>Password:</Label>
+                        <Input type="password" name="password" value={user.password} id={this.lastUniqueId()}
+                               placeholder="password..." onChange={this._onChangeUser} />
 
-                               <p className="validate-error">{this.state.validateErrors.full_price ? this.state.validateErrors.full_price : ""}</p>
+                               <p className="validate-error">{this.state.validateErrors.password ? this.state.validateErrors.password : ""}</p>
 
-                        <Label for={this.nextUniqueId()}>Parent category</Label>
-                        <CustomSelect
-                                label="Category"
-                                value={products.category_id ? products.category_id : ""}
-                                onChange={this._onChangeCategory}
-                                options={categories}
-                                subItems
-                                onlySubItems
-                            />
-
-                            <p className="validate-error">{this.state.validateErrors.category_id ? this.state.validateErrors.category_id : ""}</p>
+                        <FormGroup>
+                            <Label for={this.nextUniqueId()}>Select</Label>
+                            <Input type="select" name="type"  onChange={this._onChangeUser} value={this.state.user.type}  id={this.lastUniqueId()}>
+                                    {this.state.user.type == "0" ?    <React.Fragment> <option value="0">Normal User</option>
+                                    <option value="1">Admin</option> </React.Fragment> :<React.Fragment>  <option value="1">Admin</option>
+                                    <option value="0">Normal User</option></React.Fragment> }
+                            </Input>
+                        </FormGroup>
 
                         <Label >Image:</Label>
       
-                        <Input type="file" name="photo" value={products.selectedFile}  onChange={this._fileSelector }/> 
+                        <Input type="file" name="photo" value={user.selectedFile}  onChange={this._fileSelector }/> 
                         
                         <p className="validate-error">{this.state.validateErrors.image ? this.state.validateErrors.image : ""}</p>                           
                     </FormGroup>
@@ -414,12 +367,12 @@ export default class Products extends Component {
 
                 <div className="content-wrapper"> 
 
-                {this.props.user.type == 1 ? <Button onClick={this._addProduct} style={{width: "100%", minHeight: "40px"}}>Add Products</Button>: <div/>}
+                <Button onClick={this._addUser} style={{width: "100%", minHeight: "40px"}}>Add User</Button>
 
                     <TableDesign
-                        title = "Products"
+                        title = "Users"
                         columns={columns}
-                        items={product}
+                        items={users}
                         editItem={this._edit}
                         deleteItem={this._delete}
                         totalPages={this.state.totalPages}

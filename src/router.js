@@ -8,11 +8,15 @@ import Categories from './components/Categories';
 import SubCategories  from './components/Categories/SubCat';
 import CategoryProducts   from './components/Categories/Actions/ShowProductsByCategory';
 
-import Profile from './components/Account';
+import Profile from './components/User/profile';
 import Logout from './components/Auth/Logout';
 import Login from './components/Auth/Login';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import Products from './components/Products/products';
+
+
+import Users from './components/User';
+
 
 export default class Router extends Component {
     render() {
@@ -30,6 +34,8 @@ export default class Router extends Component {
                     
                     <Route path="/products" component={Protected(Products)} />
 
+                    <Route path="/users" component={Protected(Users)} />
+                    <Route path="/user" component={Protected(Profile)}/>
 
                     <Route path="/logout" component={Logout}/>
                 </Switch>

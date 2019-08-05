@@ -70,3 +70,25 @@
 .description-area{
   width : 100%;
 }
+
+.custom-dropdown-value {
+  border: 1px solid black;
+  padding: 3px 2px;
+}
+
+.custom-dropdown-options {
+  border: 1px solid black;
+  padding: 3px 2px;
+
+  .custom-dropdown-option {
+    padding: 3px 0;
+
+	  &.sub-item {
+		  padding-left: 10px;
+	  }
+
+	  &.disabled {
+		  color: grey;
+	  }
+  }
+}

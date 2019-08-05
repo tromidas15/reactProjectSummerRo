@@ -78,11 +78,14 @@ export default class TableDesign extends Component {
 
                                     
 
-                                if(value.property !== "photo"){
+                                if(value.property !== "photo" && value.property !== "picture"){
+                                    if(value.property == "type"){
+                                       return item[value.property]== 0 ? <td className="table-item" key={key}>Normal User</td> : <td className="table-item" key={key}>Admin</td>
+                                    }
                                     return <td className="table-item" key={key}>{item[value.property]}</td>;
                                 }else{
-                                    let image = item[value.property];
-                                    return <td className="table-item" key={key}><img src ={`http://roweb.com/storage/${image}`}  width="20px" height="20px"/></td>;
+                                    let image = item[value.property] ? item[value.property] : "noimage.jpg";
+                                    return <td className="table-item" key={key}><img src ={`http://roweb.com/storage/${image}`}  width="80px" height="60px"/></td>;
                                 }
                                 
                             })}

@@ -291,7 +291,7 @@ export default class Categories extends Component {
     render() {
         const {categories, showModal, category, parentCategories, mode , actionBlock} = this.state;
 
-
+        this.props.user.type == 0 ? columns[3] = "" : "";
 
         return (
         
@@ -331,7 +331,7 @@ export default class Categories extends Component {
                     </CustomModal>
 
                     <div className="content-wrapper"> 
-                        <Button onClick={this._addCategory} style={{width:"100%"}}>Add category</Button>
+                        {this.props.user.type == 1 ? <Button onClick={this._addCategory} style={{width:"100%"}}>Add category</Button> : <div/>}
                         <TableDesign
                             title = "Categorie`s products"
 

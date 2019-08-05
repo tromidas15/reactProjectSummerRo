@@ -20,7 +20,6 @@ export default class Logout extends Component {
             props.history.push("/login");
         } else {
             const {logoutUser} = props;
-
             logoutUser();
         }
     }
@@ -30,7 +29,7 @@ export default class Logout extends Component {
             this.props.history.push("/login");
         } else {
             const {logoutUser} = this.props;
-
+            localStorage.clear();
             logoutUser();
         }
     }
